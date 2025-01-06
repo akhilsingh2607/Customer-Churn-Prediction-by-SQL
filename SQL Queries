@@ -1,0 +1,64 @@
+create database crPrediction;
+use crPrediction;
+
+alter table cc_Prediction add column Subscription_Date2 datetime;
+
+select Subscription_Date,
+str_to_date(Subscription_Date,"%m/%d/%Y ") 
+from cc_Prediction;
+
+SET SQL_SAFE_UPDATEs = 0;
+
+update cc_Prediction
+set Subscription_Date2 = str_to_date(Subscription_Date,"%m/%d/%Y");
+
+alter table cc_Prediction add column Last_Purchase_Date2 datetime;
+
+select Last_Purchase_Date,
+str_to_date(Last_Purchase_Date,"%m/%d/%Y ") 
+from cc_Prediction;
+
+update cc_Prediction
+set Last_Purchase_Date2 = str_to_date(Last_Purchase_Date,"%m/%d/%Y");
+
+-- 1. List all customers who have not churned.
+select*from cc_Prediction
+where is_Churned = 0;
+-- 2. Find customers who have spent more than 30,000.
+select customer_id
+from cc_Prediction
+where total_spend > 30000;
+-- 3. Retrieve the top 5 customers by total spend.
+select customer_id 
+from cc_Prediction
+order by total_spend desc
+limit 5;
+-- 4. Get the count of customers who subscribed in 2023.
+SELECT COUNT(*) AS Customer_Count
+FROM cc_Prediction
+WHERE YEAR(Subscription_Date2) = 2023;
+-- 5. Calculate the average total spend for customers who have churned.
+select round(avg(total_spend),2)as AvgSpend
+from cc_Prediction
+where is_churned = 1;
+-- 6. Find the maximum total spend and the customer ID associated with it.
+select customer_id,max(total_spend) as Total_spend
+from cc_Prediction
+group by customer_id;
+-- 7. List the total spend per year.
+select year(subscription_date2),round(sum(total_spend),2)
+from cc_prediction
+group by year(subscription_date2) ;
+-- 8. Identify customers who have a subscription date earlier than their last purchase date.
+select customer_id
+from cc_Prediction
+where Subscription_date2 < Last_Purchase_Date2;
+-- 9. Calculate the churn rate.
+select (SUM(Is_Churned) * 100.0 / COUNT(*)) AS churn_rate
+from cc_Prediction;
+-- 10. List the customers with the highest spend who churned in each year.
+select year(Last_Purchase_date2) as Year,max(total_spend) as Total_Spend
+from cc_Prediction
+where is_churned = 1
+group by year(Last_Purchase_date2)
+order by Total_Spend desc;
